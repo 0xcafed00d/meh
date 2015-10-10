@@ -2,39 +2,70 @@ package meh
 
 import (
 	"errors"
-	"fmt"
+	"github.com/simulatedsimian/assert"
 	"testing"
 )
 
-func TestPanic2(t *testing.T) {
+func test1(val int) (err error) {
+	defer SetOnError(&err)
 
-	test := func() (err error) {
-		defer SetOnError(&err)
-
+	switch val {
+	case 0:
 		ReturnError(nil)
-		ReturnError(errors.New("this is an error1"))
-		ReturnError(errors.New("this is an error2"))
-
-		return
+	case 1:
+		ReturnError(errors.New("Error1"))
+	case 2:
+		ReturnError(errors.New("Error2"))
+	case 3:
+		panic("panic")
 	}
 
-	fmt.Println(test())
+	return
 }
 
-func TestPanic3(t *testing.T) {
+func TestReturn1(t *testing.T) {
 
-	test := func() (i int, err error) {
+	assert.Equal(t, test1(0), nil)
+	assert.Equal(t, test1(1).Error(), "Error1")
+	assert.Equal(t, test1(2).Error(), "Error2")
 
-		defer OnError(func(e error) {
-			i, err = 0, e
-		})
+	assert.MustPanic(t, func(t *testing.T) {
+		test1(3)
+	})
+}
 
+func test2(val int) (err error) {
+	defer OnError(func(e error) {
+		err = e
+		if val == 2 {
+			panic("panic")
+		}
+	})
+
+	switch val {
+	case 0:
 		ReturnError(nil)
-		ReturnError(errors.New("this is an error1"))
-		ReturnError(errors.New("this is an error2"))
-
-		return
+	case 1:
+		ReturnError(errors.New("Error1"))
+	case 2:
+		ReturnError(errors.New("Error2"))
+	case 3:
+		panic("panic")
 	}
 
-	fmt.Println(test())
+	return
+}
+
+func TestReturn2(t *testing.T) {
+
+	assert.Equal(t, test2(0), nil)
+	assert.Equal(t, test2(1).Error(), "Error1")
+
+	assert.MustPanic(t, func(t *testing.T) {
+		test2(3)
+	})
+
+	assert.MustPanic(t, func(t *testing.T) {
+		assert.Equal(t, test2(2).Error(), "Error2")
+	})
 }

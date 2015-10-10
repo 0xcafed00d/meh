@@ -1,7 +1,5 @@
 package meh
 
-import ()
-
 func SetOnError(errp *error) {
 	if r := recover(); r != nil {
 		if err, ok := r.(error); ok {
