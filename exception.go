@@ -6,6 +6,7 @@ import (
 
 // try/catch/finally impl.
 // dont do this. its wrong. maybe
+// Here Be Dragons
 
 func Throw(e interface{}) {
 	panic(e)
@@ -52,24 +53,26 @@ func callFunction(f interface{}, arg interface{}) bool {
 	return false
 }
 
+func (t *Tryblock) callCatcher(e interface{}) (called bool) {
+	for i := 0; i < len(t.catchers) && !called; i++ {
+		called = callFunction(t.catchers[i], e)
+	}
+	return
+}
+
 func (t *Tryblock) Finally(finally func()) {
 
 	inFinally := false
 	defer func() {
-		if r := recover(); r != nil {
+		if e := recover(); e != nil {
 			called := false
 			if !inFinally {
-				for _, f := range t.catchers {
-					called = callFunction(f, r)
-					if called {
-						break
-					}
-				}
+				called = t.callCatcher(e)
 				finally()
 			}
 
 			if !called {
-				panic(r)
+				panic(e)
 			}
 		}
 	}()
